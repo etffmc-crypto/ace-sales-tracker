@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { nextValidStages, type PipelineStage } from "@/lib/pipeline";
 import { InteractionTimeline } from "@/components/InteractionTimeline";
 import { InteractionForm } from "@/components/InteractionForm";
@@ -14,14 +15,34 @@ export default function AccountDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const [account, setAccount] = useState<AccountDetail | null>(null);
   const [editing, setEditing] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [stageError, setStageError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/accounts/${id}`);
+    if (res.status === 404) {
+      // The body of a 404 is `{ error: "Not found" }` — truthy JSON that
+      // must NOT be accepted as a real account (downstream components like
+      // ContactList assume account.contacts exists).
+      setNotFound(true);
+      return;
+    }
+    if (!res.ok || res.redirected) {
+      // A non-ok response means the request failed outright. A *redirected*
+      // response can still be `ok` (200) — that's what happens when the
+      // session expired and the proxy redirected this fetch to the login
+      // page: `fetch` follows it and returns the login HTML with status
+      // 200, so `res.ok` alone won't catch it.
+      router.push("/login");
+      return;
+    }
+    setNotFound(false);
     const data = await res.json();
     setAccount(data);
-  }, [id]);
+  }, [id, router]);
 
   useEffect(() => {
     (async () => {
@@ -29,23 +50,38 @@ export default function AccountDetailPage({
     })();
   }, [load]);
 
+  if (notFound) return <p>Account not found.</p>;
   if (!account) return <p>Loading...</p>;
 
   async function changeStage(stage: PipelineStage) {
-    await fetch(`/api/accounts/${id}`, {
+    setStageError(null);
+    const res = await fetch(`/api/accounts/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pipelineStage: stage }),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      setStageError(
+        (data && typeof data.error === "string" && data.error) ||
+          "Failed to change stage.",
+      );
+      return;
+    }
     load();
   }
 
   async function updateInfo(input: AccountInput) {
-    await fetch(`/api/accounts/${id}`, {
+    const res = await fetch(`/api/accounts/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     });
+    if (!res.ok) {
+      // Thrown so AccountForm's own catch block shows its inline error
+      // message instead of silently closing the edit form.
+      throw new Error("Failed to update account");
+    }
     setEditing(false);
     load();
   }
@@ -57,7 +93,7 @@ export default function AccountDetailPage({
     nextAction: string;
     nextActionDate: string;
   }) {
-    await fetch(`/api/accounts/${id}/interactions`, {
+    const res = await fetch(`/api/accounts/${id}/interactions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -68,6 +104,10 @@ export default function AccountDetailPage({
         nextActionDate: input.nextActionDate || null,
       }),
     });
+    if (!res.ok) {
+      // Thrown so InteractionForm's catch block shows its inline error.
+      throw new Error("Failed to log interaction");
+    }
     load();
   }
 
@@ -120,6 +160,7 @@ export default function AccountDetailPage({
             </button>
           ))}
         </div>
+        {stageError && <p className="mt-2 text-sm text-red-600">{stageError}</p>}
       </div>
 
       <div>

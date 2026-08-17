@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AccountListItem } from "@/types/account";
 
@@ -8,11 +9,13 @@ const STAGES = ["PROSPECT", "CONTACTED", "QUOTED", "ACTIVE_CUSTOMER", "INACTIVE"
 const TYPES = ["CONTRACTOR", "RESTAURANT", "PROPERTY_MGMT", "MUNICIPAL", "OTHER"];
 
 export function AccountList() {
+  const router = useRouter();
   const [accounts, setAccounts] = useState<AccountListItem[]>([]);
   const [stage, setStage] = useState("");
   const [type, setType] = useState("");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -22,18 +25,32 @@ export function AccountList() {
 
     (async () => {
       setLoading(true);
+      setError(null);
       try {
         const res = await fetch(`/api/accounts?${params.toString()}`);
+        if (!res.ok || res.redirected) {
+          // A non-ok response means the request failed outright. A
+          // *redirected* response can still be `ok` (200) — that's what
+          // happens when the session expired and the proxy redirected this
+          // fetch to the login page: `fetch` follows it and returns the
+          // login HTML with status 200, so `res.ok` alone won't catch it.
+          // Either way, don't silently render an empty list.
+          router.push("/login");
+          return;
+        }
         const data = await res.json();
         setAccounts(data);
+      } catch {
+        setError("Failed to load accounts. Please try again.");
       } finally {
         setLoading(false);
       }
     })();
-  }, [stage, type, q]);
+  }, [stage, type, q, router]);
 
   return (
     <div>
+      {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       <div className="mb-4 flex gap-2">
         <input
           placeholder="Search by name"
@@ -94,12 +111,16 @@ export function AccountList() {
                 <td className="p-2">{a.pipelineStage}</td>
                 <td className="p-2">
                   {a.lastInteractionDate
-                    ? new Date(a.lastInteractionDate).toLocaleDateString()
+                    ? new Date(a.lastInteractionDate).toLocaleDateString(undefined, {
+                        timeZone: "UTC",
+                      })
                     : "—"}
                 </td>
                 <td className="p-2">
                   {a.nextActionDate
-                    ? new Date(a.nextActionDate).toLocaleDateString()
+                    ? new Date(a.nextActionDate).toLocaleDateString(undefined, {
+                        timeZone: "UTC",
+                      })
                     : "—"}
                 </td>
               </tr>
