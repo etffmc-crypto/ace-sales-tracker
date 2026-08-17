@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/requireSession";
 import type { InteractionInput } from "@/types/account";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const unauthorized = await requireSession();
+  if (unauthorized) return unauthorized;
+
   const { id } = await params;
   const body = (await request.json()) as InteractionInput;
 
