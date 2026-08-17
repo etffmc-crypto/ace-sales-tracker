@@ -7,6 +7,8 @@ import {
   parseEmailDraftResponse,
 } from "@/lib/followUpEmail";
 
+export const maxDuration = 30;
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -88,7 +90,8 @@ export async function POST(
 
     const draft = parseEmailDraftResponse(textBlock.text);
     return NextResponse.json(draft);
-  } catch {
+  } catch (err) {
+    console.error("draft-email failed", err);
     return NextResponse.json(
       { error: "AI drafting failed. Please try again." },
       { status: 500 },
