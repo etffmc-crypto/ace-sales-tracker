@@ -1,36 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ace Sales Tracker
 
-## Getting Started
+Account/lead tracker for outside sales at Ace Hardware (Harrisburg, PA).
 
-First, run the development server:
+## Local development
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Copy `.env.example` to `.env` and fill in `DATABASE_URL` (see below), `AUTH_SECRET`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`.
+2. `npm install`
+3. `npx prisma migrate deploy`
+4. `npx prisma db seed`
+5. `npm run dev`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploying (one-time setup)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Create a Neon Postgres database:** go to neon.tech, sign up, create a project. Copy the connection string it gives you — that's your `DATABASE_URL`.
+2. **Push this repo to GitHub:** create a new (private) repo on GitHub and push this project to it.
+3. **Create a Vercel account and import the repo:** go to vercel.com, sign up (GitHub login is easiest), click "Add New Project", and import the GitHub repo you just created.
+4. **Set environment variables in Vercel:** in the project's Settings → Environment Variables, add `DATABASE_URL`, `AUTH_SECRET`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` with the same values as your local `.env`.
+5. **Deploy:** Vercel deploys automatically on import and on every push to the main branch.
+6. **Run migrations and seed against the production database:** from your local machine, temporarily point `.env`'s `DATABASE_URL` at the same Neon database Vercel is using (it already is, if you used the same one in steps 1 and 4), then run `npx prisma migrate deploy` and `npx prisma db seed` once.
+7. Visit the URL Vercel gives you and log in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Every future `git push` to the main branch redeploys automatically.
