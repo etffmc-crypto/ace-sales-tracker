@@ -14,6 +14,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <Link href="/this-week" className="text-blue-600">
           This week
         </Link>
+        <Link href="/prospecting" className="text-blue-600">
+          Prospecting
+        </Link>
       </nav>
       <div className="p-4">{children}</div>
     </div>
