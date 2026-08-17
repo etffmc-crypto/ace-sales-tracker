@@ -165,35 +165,52 @@ export function QuoteDraft({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
+        {draft && (
+          <p className="text-sm text-gray-600">
+            Line items are locked while this draft is open. Close it to make
+            changes.
+          </p>
+        )}
         {rows.map((row, i) => (
           <div key={i} className="flex gap-2">
             <input
               placeholder="Description"
-              className="flex-1 rounded border px-2 py-1 text-sm"
+              className="flex-1 rounded border px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               value={row.description}
               onChange={(e) => updateRow(i, "description", e.target.value)}
+              disabled={!!draft}
             />
             <input
               placeholder="Qty"
               type="number"
-              className="w-20 rounded border px-2 py-1 text-sm"
+              className="w-20 rounded border px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               value={row.quantity}
               onChange={(e) => updateRow(i, "quantity", e.target.value)}
+              disabled={!!draft}
             />
             <input
               placeholder="Unit price"
               type="number"
               step="0.01"
-              className="w-28 rounded border px-2 py-1 text-sm"
+              className="w-28 rounded border px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               value={row.unitPrice}
               onChange={(e) => updateRow(i, "unitPrice", e.target.value)}
+              disabled={!!draft}
             />
-            <button onClick={() => removeRow(i)} className="text-sm text-red-600">
+            <button
+              onClick={() => removeRow(i)}
+              disabled={!!draft}
+              className="text-sm text-red-600 disabled:opacity-50"
+            >
               Remove
             </button>
           </div>
         ))}
-        <button onClick={addRow} className="text-sm text-blue-600">
+        <button
+          onClick={addRow}
+          disabled={!!draft}
+          className="text-sm text-blue-600 disabled:opacity-50"
+        >
           + Add line
         </button>
         <p className="text-sm font-semibold">
