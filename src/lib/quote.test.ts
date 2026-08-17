@@ -50,4 +50,26 @@ describe("buildQuoteEmailPrompt", () => {
     expect(prompt).toContain("$0.50");
     expect(prompt).toContain("Total: $50.00");
   });
+
+  it("instructs the model to reply in the Subject/---/body format expected by parseEmailDraftResponse", () => {
+    const prompt = buildQuoteEmailPrompt(
+      "Test Co",
+      "Sam Lee",
+      [{ description: "Widget", quantity: 1, unitPrice: 10 }],
+      10,
+    );
+    expect(prompt).toContain("Subject: <subject line>");
+    expect(prompt).toContain("---");
+  });
+
+  it("tells the model it doesn't know the rep's name and to sign off generically", () => {
+    const prompt = buildQuoteEmailPrompt(
+      "Test Co",
+      "Sam Lee",
+      [{ description: "Widget", quantity: 1, unitPrice: 10 }],
+      10,
+    );
+    expect(prompt).toContain("You do not know the rep's name");
+    expect(prompt).toContain("never sign with the contact's name");
+  });
 });

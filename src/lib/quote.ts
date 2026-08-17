@@ -17,7 +17,7 @@ export function buildQuoteEmailPrompt(
     )
     .join("\n");
 
-  const intro = `You are drafting a short, professional quote email from an outside sales rep at Ace Hardware to an existing business contact. Write in a friendly, clear, professional tone. Do not use placeholder brackets like [Name] — use the actual names given.
+  const intro = `You are drafting a short, professional quote email from an outside sales rep at Ace Hardware to an existing business contact. Write in a friendly, clear, professional tone. Do not use placeholder brackets like [Name] — use the actual names given. You do not know the rep's name. Sign off generically (e.g. "Thanks!" followed by "Your Ace Hardware sales rep") — never sign with the contact's name, and never invent a name.
 
 Business: ${accountName}
 Contact: ${contactName}`;

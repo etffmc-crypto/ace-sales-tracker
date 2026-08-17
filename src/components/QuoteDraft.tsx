@@ -178,7 +178,7 @@ export function QuoteDraft({
               className="flex-1 rounded border px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               value={row.description}
               onChange={(e) => updateRow(i, "description", e.target.value)}
-              disabled={!!draft}
+              disabled={!!draft || loading}
             />
             <input
               placeholder="Qty"
@@ -186,7 +186,7 @@ export function QuoteDraft({
               className="w-20 rounded border px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               value={row.quantity}
               onChange={(e) => updateRow(i, "quantity", e.target.value)}
-              disabled={!!draft}
+              disabled={!!draft || loading}
             />
             <input
               placeholder="Unit price"
@@ -195,11 +195,11 @@ export function QuoteDraft({
               className="w-28 rounded border px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               value={row.unitPrice}
               onChange={(e) => updateRow(i, "unitPrice", e.target.value)}
-              disabled={!!draft}
+              disabled={!!draft || loading}
             />
             <button
               onClick={() => removeRow(i)}
-              disabled={!!draft}
+              disabled={!!draft || loading}
               className="text-sm text-red-600 disabled:opacity-50"
             >
               Remove
@@ -208,7 +208,7 @@ export function QuoteDraft({
         ))}
         <button
           onClick={addRow}
-          disabled={!!draft}
+          disabled={!!draft || loading}
           className="text-sm text-blue-600 disabled:opacity-50"
         >
           + Add line
@@ -276,7 +276,7 @@ export function QuoteDraft({
             </a>
             <button
               onClick={logQuote}
-              disabled={logStatus === "saving"}
+              disabled={logStatus === "saving" || logStatus === "success"}
               className="rounded border px-3 py-1 text-sm disabled:opacity-50"
             >
               {logStatus === "saving"
