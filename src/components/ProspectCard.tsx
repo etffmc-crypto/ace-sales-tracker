@@ -52,6 +52,28 @@ export function ProspectCard({
       }
       const account = await res.json();
       setAccountId(account.id);
+
+      if (candidate.email) {
+        try {
+          const contactRes = await fetch(
+            `/api/accounts/${account.id}/contacts`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: candidate.name,
+                email: candidate.email,
+                phone: candidate.phone,
+              }),
+            },
+          );
+          if (!contactRes.ok) {
+            console.error("Failed to create contact for prospect", account.id);
+          }
+        } catch (err) {
+          console.error("Failed to create contact for prospect", err);
+        }
+      }
     } catch {
       setAddError("Failed to add prospect. Please try again.");
     } finally {
@@ -107,6 +129,9 @@ export function ProspectCard({
       )}
       {candidate.phone && (
         <p className="text-sm text-gray-600">{candidate.phone}</p>
+      )}
+      {candidate.email && (
+        <p className="text-sm text-gray-600">{candidate.email}</p>
       )}
       {candidate.website && (
         <p className="text-sm text-gray-600">

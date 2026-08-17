@@ -70,6 +70,17 @@ export async function POST(request: NextRequest) {
       ],
     });
 
+    if (
+      message.stop_reason === "pause_turn" ||
+      message.stop_reason === "max_tokens"
+    ) {
+      console.error("prospect search incomplete", message.stop_reason);
+      return NextResponse.json(
+        { error: "Search timed out before finishing. Please try again." },
+        { status: 500 },
+      );
+    }
+
     let text = "";
     for (const block of message.content) {
       if (block.type === "text") {
