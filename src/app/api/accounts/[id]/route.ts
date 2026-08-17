@@ -17,7 +17,7 @@ export async function GET(
     where: { id },
     include: {
       contacts: true,
-      interactions: { orderBy: { date: "desc" } },
+      interactions: { orderBy: [{ date: "desc" }, { createdAt: "desc" }] },
     },
   });
 

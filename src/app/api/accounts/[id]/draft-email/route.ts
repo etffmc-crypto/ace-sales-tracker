@@ -28,7 +28,10 @@ export async function POST(
     where: { id },
     include: {
       contacts: true,
-      interactions: { orderBy: { date: "desc" }, take: 1 },
+      interactions: {
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+        take: 1,
+      },
     },
   });
 
