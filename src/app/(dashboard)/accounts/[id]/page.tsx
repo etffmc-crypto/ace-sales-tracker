@@ -7,6 +7,7 @@ import { InteractionTimeline } from "@/components/InteractionTimeline";
 import { InteractionForm } from "@/components/InteractionForm";
 import { ContactList } from "@/components/ContactList";
 import { AccountForm } from "@/components/AccountForm";
+import { FollowUpEmailDraft } from "@/components/FollowUpEmailDraft";
 import type { AccountDetail, AccountInput } from "@/types/account";
 
 export default function AccountDetailPage({
@@ -176,6 +177,11 @@ export default function AccountDetailPage({
       <div>
         <h2 className="mb-2 font-semibold">History</h2>
         <InteractionTimeline interactions={account.interactions} />
+      </div>
+
+      <div>
+        <h2 className="mb-2 font-semibold">Follow-up</h2>
+        <FollowUpEmailDraft accountId={id} contacts={account.contacts} />
       </div>
     </div>
   );
