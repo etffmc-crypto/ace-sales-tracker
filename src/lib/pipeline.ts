@@ -14,7 +14,7 @@ export const PIPELINE_ORDER: PipelineStage[] = [
 
 export function nextValidStages(current: PipelineStage): PipelineStage[] {
   if (current === "INACTIVE") {
-    return PIPELINE_ORDER;
+    return [...PIPELINE_ORDER];
   }
   const idx = PIPELINE_ORDER.indexOf(current);
   const forward = PIPELINE_ORDER.slice(idx + 1);
