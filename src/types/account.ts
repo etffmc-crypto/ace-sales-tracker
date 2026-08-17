@@ -21,15 +21,15 @@ export interface AccountListItem {
   name: string;
   accountType: AccountType;
   pipelineStage: PipelineStage;
+  addressLine: string | null;
+  city: string;
+  state: string;
+  zip: string | null;
   lastInteractionDate: string | null;
   nextActionDate: string | null;
 }
 
 export interface AccountDetail extends AccountListItem {
-  addressLine: string | null;
-  city: string;
-  state: string;
-  zip: string | null;
   phone: string | null;
   source: AccountSource;
   contacts: {

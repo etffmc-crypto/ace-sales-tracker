@@ -53,6 +53,10 @@ export async function GET(request: NextRequest) {
     name: a.name,
     accountType: a.accountType,
     pipelineStage: a.pipelineStage,
+    addressLine: a.addressLine,
+    city: a.city,
+    state: a.state,
+    zip: a.zip,
     lastInteractionDate: a.interactions[0]?.date.toISOString() ?? null,
     nextActionDate: pendingByAccount.get(a.id)?.toISOString() ?? null,
   }));
