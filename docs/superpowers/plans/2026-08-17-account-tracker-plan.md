@@ -1784,7 +1784,8 @@ import { nextValidStages, type PipelineStage } from "@/lib/pipeline";
 import { InteractionTimeline } from "@/components/InteractionTimeline";
 import { InteractionForm } from "@/components/InteractionForm";
 import { ContactList } from "@/components/ContactList";
-import type { AccountDetail } from "@/types/account";
+import { AccountForm } from "@/components/AccountForm";
+import type { AccountDetail, AccountInput } from "@/types/account";
 
 export default function AccountDetailPage({
   params,
@@ -1793,6 +1794,7 @@ export default function AccountDetailPage({
 }) {
   const { id } = use(params);
   const [account, setAccount] = useState<AccountDetail | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const load = useCallback(() => {
     fetch(`/api/accounts/${id}`)
@@ -1812,6 +1814,16 @@ export default function AccountDetailPage({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pipelineStage: stage }),
     });
+    load();
+  }
+
+  async function updateInfo(input: AccountInput) {
+    await fetch(`/api/accounts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    setEditing(false);
     load();
   }
 
@@ -1839,12 +1851,38 @@ export default function AccountDetailPage({
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">{account.name}</h1>
-        <p className="text-gray-600">
-          {account.addressLine ? `${account.addressLine}, ` : ""}
-          {account.city}, {account.state} {account.zip}
-        </p>
-        <p className="text-gray-600">{account.phone}</p>
+        {editing ? (
+          <div>
+            <AccountForm
+              initial={account}
+              onSubmit={updateInfo}
+              submitLabel="Save changes"
+            />
+            <button
+              onClick={() => setEditing(false)}
+              className="mt-2 text-sm text-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold">{account.name}</h1>
+              <button
+                onClick={() => setEditing(true)}
+                className="text-sm text-blue-600"
+              >
+                Edit
+              </button>
+            </div>
+            <p className="text-gray-600">
+              {account.addressLine ? `${account.addressLine}, ` : ""}
+              {account.city}, {account.state} {account.zip}
+            </p>
+            <p className="text-gray-600">{account.phone}</p>
+          </div>
+        )}
         <div className="mt-2 flex items-center gap-2">
           <span className="rounded bg-gray-100 px-2 py-1 text-sm">
             {account.pipelineStage}
@@ -1882,7 +1920,7 @@ export default function AccountDetailPage({
 
 - [ ] **Step 5: Verify by hand**
 
-Visit an account created earlier at `/accounts/<id>`. Confirm: business info displays; adding a contact shows it immediately; logging an interaction adds it to History and, if it set a next action date, that the account list's "Next action" column updates accordingly; clicking a "Move to X" button changes the stage badge and only offers valid next stages.
+Visit an account created earlier at `/accounts/<id>`. Confirm: business info displays; clicking "Edit" shows the `AccountForm` pre-filled with the account's current values, and saving updates the displayed info and exits edit mode; adding a contact shows it immediately; logging an interaction adds it to History and, if it set a next action date, that the account list's "Next action" column updates accordingly; clicking a "Move to X" button changes the stage badge and only offers valid next stages.
 
 - [ ] **Step 6: Commit**
 
