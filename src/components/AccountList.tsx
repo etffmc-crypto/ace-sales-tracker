@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import type { AccountListItem } from "@/types/account";
 
 const STAGES = ["PROSPECT", "CONTACTED", "QUOTED", "ACTIVE_CUSTOMER", "INACTIVE"];
@@ -13,7 +13,6 @@ export function AccountList() {
   const [type, setType] = useState("");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
-  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -21,7 +20,7 @@ export function AccountList() {
     if (type) params.set("type", type);
     if (q) params.set("q", q);
 
-    startTransition(async () => {
+    (async () => {
       setLoading(true);
       try {
         const res = await fetch(`/api/accounts?${params.toString()}`);
@@ -30,7 +29,7 @@ export function AccountList() {
       } finally {
         setLoading(false);
       }
-    });
+    })();
   }, [stage, type, q]);
 
   return (
