@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description: "Account and lead tracker for outside sales",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
