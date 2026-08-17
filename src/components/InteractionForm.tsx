@@ -6,7 +6,7 @@ import { useState, type FormEvent } from "react";
 // `new Date().toISOString().slice(0, 10)` looks equivalent but is today in
 // UTC, not local time — it pre-fills tomorrow's date for anyone in a
 // timezone behind UTC (e.g. US timezones, roughly 8pm-midnight Eastern).
-function todayLocalDate(): string {
+export function todayLocalDate(): string {
   const today = new Date();
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
     today.getDate(),
