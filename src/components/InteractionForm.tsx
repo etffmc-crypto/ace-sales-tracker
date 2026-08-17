@@ -2,6 +2,17 @@
 
 import { useState, type FormEvent } from "react";
 
+// Returns today's date in the browser's local timezone as "YYYY-MM-DD".
+// `new Date().toISOString().slice(0, 10)` looks equivalent but is today in
+// UTC, not local time — it pre-fills tomorrow's date for anyone in a
+// timezone behind UTC (e.g. US timezones, roughly 8pm-midnight Eastern).
+function todayLocalDate(): string {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
+    today.getDate(),
+  ).padStart(2, "0")}`;
+}
+
 export function InteractionForm({
   onSubmit,
 }: {
@@ -13,21 +24,25 @@ export function InteractionForm({
     nextActionDate: string;
   }) => Promise<void>;
 }) {
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayLocalDate());
   const [type, setType] = useState<"VISIT" | "CALL" | "EMAIL">("VISIT");
   const [notes, setNotes] = useState("");
   const [nextAction, setNextAction] = useState("");
   const [nextActionDate, setNextActionDate] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setError(null);
     setSaving(true);
     try {
       await onSubmit({ date, type, notes, nextAction, nextActionDate });
       setNotes("");
       setNextAction("");
       setNextActionDate("");
+    } catch {
+      setError("Failed to log interaction. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -35,6 +50,7 @@ export function InteractionForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2 rounded border p-3">
+      {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
         <input
           type="date"

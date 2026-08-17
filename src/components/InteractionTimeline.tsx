@@ -20,14 +20,14 @@ export function InteractionTimeline({
         <li key={i.id} className="border-b pb-2">
           <div className="flex justify-between text-sm text-gray-600">
             <span>{i.type}</span>
-            <span>{i.date.toLocaleDateString()}</span>
+            <span>{i.date.toLocaleDateString(undefined, { timeZone: "UTC" })}</span>
           </div>
           {i.notes && <p>{i.notes}</p>}
           {i.nextAction && (
             <p className="text-sm text-blue-700">
               Next: {i.nextAction}
               {i.nextActionDate &&
-                ` (by ${new Date(i.nextActionDate).toLocaleDateString()})`}
+                ` (by ${new Date(i.nextActionDate).toLocaleDateString(undefined, { timeZone: "UTC" })})`}
             </p>
           )}
         </li>
