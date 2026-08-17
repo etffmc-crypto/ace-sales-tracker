@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { AccountDetail } from "@/types/account";
 
 export function FollowUpEmailDraft({
@@ -10,6 +11,7 @@ export function FollowUpEmailDraft({
   accountId: string;
   contacts: AccountDetail["contacts"];
 }) {
+  const router = useRouter();
   const contactsWithEmail = contacts.filter(
     (c): c is typeof c & { email: string } => !!c.email,
   );
@@ -40,6 +42,15 @@ export function FollowUpEmailDraft({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contactId }),
       });
+      if (res.redirected) {
+        // A non-ok response means the request failed outright. A *redirected*
+        // response can still be `ok` (200) — that's what happens when the
+        // session expired and the proxy redirected this fetch to the login
+        // page: `fetch` follows it and returns the login HTML with status
+        // 200, so `res.ok` alone won't catch it.
+        router.push("/login");
+        return;
+      }
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         setError(
@@ -50,6 +61,8 @@ export function FollowUpEmailDraft({
       }
       setDraft(data);
       setShowPicker(false);
+    } catch {
+      setError("Failed to draft email. Please try again.");
     } finally {
       setLoading(false);
     }
