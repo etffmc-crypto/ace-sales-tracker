@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountType {
+  CONTRACTOR
+  RESTAURANT
+  PROPERTY_MGMT
+  MUNICIPAL
+  OTHER
+}
+
+enum PipelineStage {
+  PROSPECT
+  CONTACTED
+  QUOTED
+  ACTIVE_CUSTOMER
+  INACTIVE
+}
+
+enum AccountSource {
+  INHERITED
+  PROSPECTED
+}
+
+enum InteractionType {
+  VISIT
+  CALL
+  EMAIL
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Account {
+  id            String        @id @default(uuid())
+  name          String
+  addressLine   String?
+  city          String        @default("Harrisburg")
+  state         String        @default("PA")
+  zip           String?
+  phone         String?
+  accountType   AccountType   @default(OTHER)
+  pipelineStage PipelineStage @default(PROSPECT)
+  source        AccountSource @default(PROSPECTED)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  contacts      Contact[]
+  interactions  Interaction[]
+
+  @@index([pipelineStage])
+  @@index([accountType])
+}
+
+model Contact {
+  id        String  @id @default(uuid())
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name      String
+  title     String?
+  phone     String?
+  email     String?
+  notes     String?
+
+  @@index([accountId])
+}
+
+model Interaction {
+  id             String           @id @default(uuid())
+  accountId      String
+  account        Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  date           DateTime
+  type           InteractionType
+  notes          String?
+  nextAction     String?
+  nextActionDate DateTime?
+  createdAt      DateTime         @default(now())
+
+  @@index([accountId])
+  @@index([date])
+}
