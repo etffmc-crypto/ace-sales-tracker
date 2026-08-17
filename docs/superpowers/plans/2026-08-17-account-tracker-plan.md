@@ -580,11 +580,11 @@ git commit -m "Add Prisma client singleton and admin seed script"
 ### Task 7: Authentication (Auth.js Credentials provider) and login page
 
 **Files:**
-- Create: `src/lib/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, `src/middleware.ts`, `src/app/login/page.tsx`, `src/app/providers.tsx`
+- Create: `src/lib/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, `src/proxy.ts`, `src/app/login/page.tsx`, `src/app/providers.tsx`
 - Modify: `src/app/layout.tsx` (wrap children in `<Providers>`)
 
 **Interfaces:**
-- Produces: `auth()`, `signIn`, `signOut`, `handlers` exported from `src/lib/auth.ts`. `middleware.ts` protects all routes except `/login` and `/api/auth/*`.
+- Produces: `auth()`, `signIn`, `signOut`, `handlers` exported from `src/lib/auth.ts`. `proxy.ts` protects all routes except `/login` and `/api/auth/*`.
 - Consumes: `prisma` from Task 6, `AUTH_SECRET` env var.
 
 - [ ] **Step 1: Install Auth.js**
@@ -644,12 +644,16 @@ import { handlers } from "@/lib/auth";
 export const { GET, POST } = handlers;
 ```
 
-- [ ] **Step 4: Add route protection middleware**
+- [ ] **Step 4: Add route protection proxy**
 
-`src/middleware.ts`:
+Next.js 16 renamed the `middleware.ts` file convention to `proxy.ts` (same
+mechanism, same execution point — file and export name only). Use the
+current convention:
+
+`src/proxy.ts`:
 
 ```ts
-export { auth as middleware } from "@/lib/auth";
+export { auth as proxy } from "@/lib/auth";
 
 export const config = {
   matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)"],
@@ -749,7 +753,7 @@ Expected: successful login redirects to `/` and shows the placeholder home page 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add src/lib/auth.ts src/app/api/auth src/middleware.ts src/app/providers.tsx src/app/login src/app/layout.tsx package.json package-lock.json
+git add src/lib/auth.ts src/app/api/auth src/proxy.ts src/app/providers.tsx src/app/login src/app/layout.tsx package.json package-lock.json
 git commit -m "Add single-user authentication"
 ```
 
