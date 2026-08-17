@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { isDueForVisit, buildMapsRouteUrl } from "./routePlanning";
+import {
+  isDueForVisit,
+  isOverdue,
+  buildMapsRouteUrl,
+  MAX_MAPS_STOPS,
+} from "./routePlanning";
 
 describe("isDueForVisit", () => {
   const today = new Date("2026-08-17T12:00:00Z");
@@ -23,6 +28,32 @@ describe("isDueForVisit", () => {
   it("treats the exact boundary date as due", () => {
     const cutoff = new Date("2026-08-24T12:00:00Z"); // exactly 7 days after `today`
     expect(isDueForVisit(cutoff.toISOString(), today, 7)).toBe(true);
+  });
+});
+
+describe("isOverdue", () => {
+  const today = new Date("2026-08-17T18:30:00-04:00"); // 2026-08-17T22:30:00.000Z
+
+  it("does not consider a date due today as overdue", () => {
+    expect(isOverdue("2026-08-17T00:00:00.000Z", today)).toBe(false);
+  });
+
+  it("considers a date due yesterday as overdue", () => {
+    expect(isOverdue("2026-08-16T00:00:00.000Z", today)).toBe(true);
+  });
+
+  it("does not consider a date due tomorrow as overdue", () => {
+    expect(isOverdue("2026-08-18T00:00:00.000Z", today)).toBe(false);
+  });
+
+  it("returns false when there is no next action date", () => {
+    expect(isOverdue(null, today)).toBe(false);
+  });
+});
+
+describe("MAX_MAPS_STOPS", () => {
+  it("is 10 (1 destination + 9 waypoints, the Google Maps URL API limit)", () => {
+    expect(MAX_MAPS_STOPS).toBe(10);
   });
 });
 

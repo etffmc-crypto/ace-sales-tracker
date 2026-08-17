@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { isDueForVisit, buildMapsRouteUrl } from "@/lib/routePlanning";
+import {
+  isDueForVisit,
+  isOverdue,
+  buildMapsRouteUrl,
+  MAX_MAPS_STOPS,
+} from "@/lib/routePlanning";
 import type { AccountListItem } from "@/types/account";
 
 function formatAddress(account: AccountListItem): string {
@@ -60,7 +65,9 @@ export default function ThisWeekPage() {
     window.open(buildMapsRouteUrl(addresses), "_blank");
   }
 
-  const anyChecked = Object.values(checked).some(Boolean);
+  const checkedCount = Object.values(checked).filter(Boolean).length;
+  const anyChecked = checkedCount > 0;
+  const tooManyStops = checkedCount > MAX_MAPS_STOPS;
 
   if (loading) return <p>Loading...</p>;
 
@@ -68,7 +75,7 @@ export default function ThisWeekPage() {
     <div className="max-w-2xl space-y-4">
       <h1 className="text-xl font-semibold">This week</h1>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      {accounts.length === 0 ? (
+      {error ? null : accounts.length === 0 ? (
         <p className="text-gray-600">
           Nothing due this week — nice work staying on top of it.
         </p>
@@ -76,9 +83,7 @@ export default function ThisWeekPage() {
         <>
           <ul className="space-y-2">
             {accounts.map((a) => {
-              const overdue = a.nextActionDate
-                ? new Date(a.nextActionDate) < new Date()
-                : false;
+              const overdue = isOverdue(a.nextActionDate, new Date());
               const usable = Boolean(a.addressLine);
               return (
                 <li
@@ -113,9 +118,15 @@ export default function ThisWeekPage() {
               );
             })}
           </ul>
+          {tooManyStops && (
+            <p className="text-sm text-red-600">
+              Maps supports up to {MAX_MAPS_STOPS} stops at once — uncheck{" "}
+              {checkedCount - MAX_MAPS_STOPS} to continue.
+            </p>
+          )}
           <button
             onClick={openRoute}
-            disabled={!anyChecked}
+            disabled={!anyChecked || tooManyStops}
             className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
           >
             Open route in Maps
