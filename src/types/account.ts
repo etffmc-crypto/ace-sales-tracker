@@ -57,3 +57,11 @@ export interface ContactInput {
   email?: string | null;
   notes?: string | null;
 }
+
+export interface InteractionInput {
+  date: string;
+  type: "VISIT" | "CALL" | "EMAIL";
+  notes?: string | null;
+  nextAction?: string | null;
+  nextActionDate?: string | null;
+}
