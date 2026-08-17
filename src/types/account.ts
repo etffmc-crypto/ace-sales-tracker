@@ -49,3 +49,11 @@ export interface AccountDetail extends AccountListItem {
     nextActionDate: string | null;
   }[];
 }
+
+export interface ContactInput {
+  name: string;
+  title?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  notes?: string | null;
+}
