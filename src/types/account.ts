@@ -65,3 +65,18 @@ export interface InteractionInput {
   nextAction?: string | null;
   nextActionDate?: string | null;
 }
+
+export interface ProspectDraftListItem {
+  id: string;
+  subject: string;
+  body: string;
+  recipientEmail: string | null;
+  account: {
+    id: string;
+    name: string;
+    addressLine: string | null;
+    city: string;
+    state: string;
+    zip: string | null;
+  };
+}
