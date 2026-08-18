@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProspectCard } from "@/components/ProspectCard";
+import { ProspectDraftQueue } from "@/components/ProspectDraftQueue";
 import type { ProspectCandidate } from "@/lib/prospecting";
 import type { AccountType } from "@prisma/client";
 
@@ -54,6 +55,7 @@ export default function ProspectingPage() {
   return (
     <div className="max-w-2xl space-y-4">
       <h1 className="text-xl font-semibold">Prospecting</h1>
+      <ProspectDraftQueue />
       <div className="flex items-center gap-2">
         <select
           className="rounded border px-3 py-2"
