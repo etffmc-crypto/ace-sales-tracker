@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProspectDraftListItem } from "@/types/account";
+import { EmailDraftPreview } from "@/components/EmailDraftPreview";
+import { Badge, Card, EmptyState, Icons, LoadingBlock, initials } from "@/components/ui";
 
 export function ProspectDraftQueue() {
   const router = useRouter();
@@ -55,55 +57,85 @@ export function ProspectDraftQueue() {
   }
 
   return (
-    <div className="space-y-2 rounded border p-3">
-      <h2 className="font-semibold">Needs review</h2>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+    <Card
+      title="Needs review"
+      description="Intro emails drafted automatically for new prospects. Copy, send, or dismiss."
+      actions={
+        drafts && drafts.length > 0 ? (
+          <Badge tone="warning">{drafts.length} waiting</Badge>
+        ) : null
+      }
+    >
+      {error && <p className="alert-error">{error}</p>}
+      {!drafts && !error && <LoadingBlock label="Loading review queue…" />}
       {drafts && drafts.length === 0 && (
-        <p className="text-sm text-gray-600">Nothing to review right now.</p>
+        <EmptyState
+          icon={Icons.check}
+          title="Nothing to review right now"
+          description="New drafts from the automated prospector will show up here."
+        />
       )}
       {drafts && drafts.length > 0 && (
-        <ul className="space-y-2">
-          {drafts.map((draft) => (
-            <li key={draft.id} className="space-y-1 rounded border p-2">
-              <p className="font-semibold">{draft.account.name}</p>
-              {draft.account.addressLine && (
-                <p className="text-sm text-gray-600">
-                  {draft.account.addressLine}
-                  {draft.account.city ? `, ${draft.account.city}` : ""}
-                  {draft.account.state ? `, ${draft.account.state}` : ""}
-                  {draft.account.zip ? ` ${draft.account.zip}` : ""}
-                </p>
-              )}
-              <p className="text-sm font-semibold">
-                Subject: {draft.subject}
-              </p>
-              <p className="whitespace-pre-wrap text-sm">{draft.body}</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => copyDraft(draft)}
-                  className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
-                >
-                  {copiedId === draft.id ? "Copied!" : "Copy"}
-                </button>
-                {draft.recipientEmail && (
-                  <a
-                    href={`mailto:${draft.recipientEmail}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}
-                    className="rounded border px-3 py-1 text-sm"
-                  >
-                    Open in email
-                  </a>
-                )}
-                <button
-                  onClick={() => dismiss(draft.id)}
-                  className="rounded border px-3 py-1 text-sm"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </li>
-          ))}
+        <ul className="space-y-4">
+          {drafts.map((draft) => {
+            const cityState = [draft.account.city, draft.account.state]
+              .filter(Boolean)
+              .join(", ");
+            const address = draft.account.addressLine
+              ? [
+                  draft.account.addressLine,
+                  [cityState, draft.account.zip].filter(Boolean).join(" "),
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              : null;
+            return (
+              <li key={draft.id} className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[11px] font-semibold text-gray-600">
+                    {initials(draft.account.name)}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-gray-900">{draft.account.name}</p>
+                    {address && <p className="truncate text-xs text-gray-500">{address}</p>}
+                  </div>
+                </div>
+                <EmailDraftPreview
+                  subject={draft.subject}
+                  body={draft.body}
+                  to={draft.recipientEmail}
+                  actions={
+                    <>
+                      <button
+                        onClick={() => copyDraft(draft)}
+                        className="btn-primary btn-sm"
+                      >
+                        {copiedId === draft.id ? Icons.check : Icons.copy}
+                        {copiedId === draft.id ? "Copied!" : "Copy"}
+                      </button>
+                      {draft.recipientEmail && (
+                        <a
+                          href={`mailto:${draft.recipientEmail}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}
+                          className="btn-secondary btn-sm"
+                        >
+                          {Icons.mail}
+                          Open in email
+                        </a>
+                      )}
+                      <button
+                        onClick={() => dismiss(draft.id)}
+                        className="btn-ghost btn-sm ml-auto"
+                      >
+                        Dismiss
+                      </button>
+                    </>
+                  }
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
-    </div>
+    </Card>
   );
 }

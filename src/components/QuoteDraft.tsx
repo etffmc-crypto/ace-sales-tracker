@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AccountDetail } from "@/types/account";
 import { todayLocalDate } from "@/components/InteractionForm";
+import { EmailDraftPreview } from "@/components/EmailDraftPreview";
+import { Icons, Spinner } from "@/components/ui";
 
 interface LineItemRow {
   description: string;
@@ -44,8 +46,8 @@ export function QuoteDraft({
 
   if (contactsWithEmail.length === 0) {
     return (
-      <p className="text-sm text-gray-600">
-        Add an email to a contact to draft quotes.
+      <p className="muted">
+        Add an email address to a contact to draft quotes.
       </p>
     );
   }
@@ -162,146 +164,169 @@ export function QuoteDraft({
 
   const hasValidItems = parsedItems.length > 0;
 
+  const locked = !!draft || loading;
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="space-y-2">
         {draft && (
-          <p className="text-sm text-gray-600">
-            Line items are locked while this draft is open. Close it to make
-            changes.
+          <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">
+            Line items are locked while this draft is open. Close it to make changes.
           </p>
         )}
+        <div className="hidden grid-cols-[1fr_4.5rem_6.5rem_auto] gap-2 px-0.5 sm:grid">
+          <span className="eyebrow">Item</span>
+          <span className="eyebrow">Qty</span>
+          <span className="eyebrow">Unit price</span>
+          <span className="w-7" />
+        </div>
         {rows.map((row, i) => (
-          <div key={i} className="flex gap-2">
+          <div key={i} className="grid grid-cols-[1fr_4.5rem_6.5rem_auto] gap-2">
             <input
               placeholder="Description"
-              className="flex-1 rounded border px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+              className="input"
               value={row.description}
               onChange={(e) => updateRow(i, "description", e.target.value)}
-              disabled={!!draft || loading}
+              disabled={locked}
             />
             <input
               placeholder="Qty"
               type="number"
-              className="w-20 rounded border px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+              className="input tabular-nums"
               value={row.quantity}
               onChange={(e) => updateRow(i, "quantity", e.target.value)}
-              disabled={!!draft || loading}
+              disabled={locked}
             />
             <input
-              placeholder="Unit price"
+              placeholder="0.00"
               type="number"
               step="0.01"
-              className="w-28 rounded border px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+              className="input tabular-nums"
               value={row.unitPrice}
               onChange={(e) => updateRow(i, "unitPrice", e.target.value)}
-              disabled={!!draft || loading}
+              disabled={locked}
             />
             <button
               onClick={() => removeRow(i)}
-              disabled={!!draft || loading}
-              className="text-sm text-red-600 disabled:opacity-50"
+              disabled={locked}
+              className="btn-danger-ghost h-9 w-7 px-0"
+              aria-label="Remove line"
+              title="Remove line"
             >
-              Remove
+              ×
             </button>
           </div>
         ))}
-        <button
-          onClick={addRow}
-          disabled={!!draft || loading}
-          className="text-sm text-blue-600 disabled:opacity-50"
-        >
-          + Add line
-        </button>
-        <p className="text-sm font-semibold">
-          Total: ${runningTotal.toFixed(2)}
-        </p>
+        <div className="flex items-center justify-between pt-1">
+          <button onClick={addRow} disabled={locked} className="btn-ghost btn-sm -ml-2">
+            {Icons.plus} Add line
+          </button>
+          <p className="text-sm text-gray-600">
+            Total{" "}
+            <span className="ml-1 font-semibold tabular-nums text-gray-900">
+              ${runningTotal.toFixed(2)}
+            </span>
+          </p>
+        </div>
       </div>
 
       {!draft && !showPicker && (
         <button
           onClick={handleDraftClick}
           disabled={loading || !hasValidItems}
-          className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+          className="btn-secondary"
         >
-          {loading ? "Drafting..." : "Draft quote email"}
+          {loading ? <Spinner /> : Icons.sparkles}
+          {loading ? "Drafting…" : "Draft quote email"}
         </button>
       )}
 
       {showPicker && !draft && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
-            className="rounded border px-2 py-1 text-sm"
+            className="select sm:flex-1"
             value={selectedContactId}
             onChange={(e) => setSelectedContactId(e.target.value)}
           >
-            <option value="">Choose a contact...</option>
+            <option value="">Choose a contact…</option>
             {contactsWithEmail.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name} ({c.email})
               </option>
             ))}
           </select>
-          <button
-            onClick={() => selectedContactId && requestDraft(selectedContactId)}
-            disabled={!selectedContactId || loading}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
-          >
-            {loading ? "Drafting..." : "Draft"}
-          </button>
-          <button onClick={() => setShowPicker(false)} className="text-sm text-gray-600">
-            Cancel
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => selectedContactId && requestDraft(selectedContactId)}
+              disabled={!selectedContactId || loading}
+              className="btn-primary"
+            >
+              {loading ? <Spinner /> : Icons.sparkles}
+              {loading ? "Drafting…" : "Draft"}
+            </button>
+            <button onClick={() => setShowPicker(false)} className="btn-ghost">
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="alert-error">{error}</p>}
 
       {draft && draftContact && (
-        <div className="space-y-2 rounded border p-3">
-          <p className="text-sm font-semibold">Subject: {draft.subject}</p>
-          <p className="whitespace-pre-wrap text-sm">{draft.body}</p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={copyEmail}
-              className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
-            >
-              {copied ? "Copied!" : "Copy"}
-            </button>
-            <a
-              href={`mailto:${draftContact.email}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}
-              className="rounded border px-3 py-1 text-sm"
-            >
-              Send via email
-            </a>
-            <button
-              onClick={logQuote}
-              disabled={logStatus === "saving" || logStatus === "success"}
-              className="rounded border px-3 py-1 text-sm disabled:opacity-50"
-            >
-              {logStatus === "saving"
-                ? "Logging..."
-                : logStatus === "success"
-                  ? "Logged ✓"
-                  : "Log this quote"}
-            </button>
-            <button
-              onClick={() => {
-                setDraft(null);
-                setSelectedContactId("");
-                setLogStatus("idle");
-              }}
-              className="text-sm text-gray-600"
-            >
-              Close
-            </button>
-          </div>
-          {logStatus === "error" && (
-            <p className="text-sm text-red-600">
-              Failed to log this quote. Please try again.
-            </p>
-          )}
-        </div>
+        <EmailDraftPreview
+          subject={draft.subject}
+          body={draft.body}
+          to={`${draftContact.name} <${draftContact.email}>`}
+          actions={
+            <>
+              <button onClick={copyEmail} className="btn-primary btn-sm">
+                {copied ? Icons.check : Icons.copy}
+                {copied ? "Copied!" : "Copy"}
+              </button>
+              <a
+                href={`mailto:${draftContact.email}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}
+                className="btn-secondary btn-sm"
+              >
+                {Icons.mail}
+                Send via email
+              </a>
+              <button
+                onClick={logQuote}
+                disabled={logStatus === "saving" || logStatus === "success"}
+                className="btn-secondary btn-sm"
+              >
+                {logStatus === "saving" ? (
+                  <Spinner />
+                ) : logStatus === "success" ? (
+                  Icons.check
+                ) : null}
+                {logStatus === "saving"
+                  ? "Logging…"
+                  : logStatus === "success"
+                    ? "Logged"
+                    : "Log this quote"}
+              </button>
+              <button
+                onClick={() => {
+                  setDraft(null);
+                  setSelectedContactId("");
+                  setLogStatus("idle");
+                }}
+                className="btn-ghost btn-sm ml-auto"
+              >
+                Close
+              </button>
+            </>
+          }
+          footer={
+            logStatus === "error" ? (
+              <p className="border-t border-red-100 bg-red-50 px-4 py-2 text-xs text-red-700">
+                Failed to log this quote. Please try again.
+              </p>
+            ) : null
+          }
+        />
       )}
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import type { AccountDetail, ContactInput } from "@/types/account";
+import { Icons, Spinner, initials } from "@/components/ui";
 
 export function ContactList({
   accountId,
@@ -18,6 +19,7 @@ export function ContactList({
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<ContactInput>({ name: "" });
@@ -111,87 +113,89 @@ export function ContactList({
   }
 
   return (
-    <div className="space-y-2">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+    <div className="space-y-4">
+      {error && <p className="alert-error">{error}</p>}
       {contacts.length === 0 ? (
-        <p className="text-gray-600">No contacts yet.</p>
+        <p className="muted">No contacts yet. Add the people you talk to at this account.</p>
       ) : (
-        <ul className="space-y-1">
+        <ul className="divide-y divide-gray-100">
           {contacts.map((c) =>
             editingId === c.id ? (
-              <li key={c.id} className="rounded border p-2">
-                <form onSubmit={saveEdit} className="space-y-2">
-                  {editError && <p className="text-sm text-red-600">{editError}</p>}
-                  <div className="flex gap-2">
+              <li key={c.id} className="py-3">
+                <form onSubmit={saveEdit} className="space-y-3 rounded-lg bg-gray-50 p-3">
+                  {editError && <p className="alert-error">{editError}</p>}
+                  <div className="grid grid-cols-2 gap-2">
                     <input
                       placeholder="Name"
-                      className="rounded border px-2 py-1"
+                      className="input"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                     />
                     <input
                       placeholder="Title"
-                      className="rounded border px-2 py-1"
+                      className="input"
                       value={editForm.title ?? ""}
                       onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                     />
-                  </div>
-                  <div className="flex gap-2">
                     <input
                       placeholder="Email"
-                      className="rounded border px-2 py-1"
+                      className="input"
                       value={editForm.email ?? ""}
                       onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                     />
                     <input
                       placeholder="Phone"
-                      className="rounded border px-2 py-1"
+                      className="input"
                       value={editForm.phone ?? ""}
                       onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                     />
                   </div>
                   <textarea
                     placeholder="Notes"
-                    className="w-full rounded border px-2 py-1"
+                    className="input min-h-[64px]"
                     value={editForm.notes ?? ""}
                     onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                   />
                   <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      disabled={editSaving}
-                      className="rounded bg-blue-600 px-3 py-1 text-white disabled:opacity-50"
-                    >
-                      {editSaving ? "Saving..." : "Save"}
+                    <button type="submit" disabled={editSaving} className="btn-primary btn-sm">
+                      {editSaving && <Spinner />}
+                      {editSaving ? "Saving…" : "Save"}
                     </button>
-                    <button
-                      type="button"
-                      onClick={cancelEdit}
-                      className="text-sm text-gray-600"
-                    >
+                    <button type="button" onClick={cancelEdit} className="btn-ghost btn-sm">
                       Cancel
                     </button>
                   </div>
                 </form>
               </li>
             ) : (
-              <li key={c.id} className="flex items-center justify-between">
-                <span>
-                  {c.name}
-                  {c.title ? ` — ${c.title}` : ""}
-                  {c.email ? ` (${c.email})` : ""}
+              <li key={c.id} className="group flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[11px] font-semibold text-gray-600">
+                  {initials(c.name)}
                 </span>
-                <span className="flex gap-2">
-                  <button
-                    onClick={() => startEdit(c)}
-                    className="text-sm text-blue-600"
-                  >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    {c.name}
+                    {c.title && <span className="font-normal text-gray-500"> · {c.title}</span>}
+                  </p>
+                  <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
+                    {c.email && (
+                      <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1 hover:text-gray-900">
+                        {Icons.mail} {c.email}
+                      </a>
+                    )}
+                    {c.phone && (
+                      <a href={`tel:${c.phone}`} className="inline-flex items-center gap-1 hover:text-gray-900">
+                        {Icons.phone} {c.phone}
+                      </a>
+                    )}
+                  </div>
+                  {c.notes && <p className="mt-1 text-xs text-gray-500">{c.notes}</p>}
+                </div>
+                <span className="flex shrink-0 gap-1 opacity-70 transition group-hover:opacity-100">
+                  <button onClick={() => startEdit(c)} className="btn-ghost btn-sm">
                     Edit
                   </button>
-                  <button
-                    onClick={() => removeContact(c.id)}
-                    className="text-sm text-red-600"
-                  >
+                  <button onClick={() => removeContact(c.id)} className="btn-danger-ghost btn-sm">
                     Remove
                   </button>
                 </span>
@@ -200,41 +204,57 @@ export function ContactList({
           )}
         </ul>
       )}
-      <form onSubmit={addContact} className="flex flex-wrap gap-2">
-        <input
-          placeholder="Name"
-          className="rounded border px-2 py-1"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          placeholder="Title"
-          className="rounded border px-2 py-1"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <input
-          placeholder="Email"
-          className="rounded border px-2 py-1"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          placeholder="Phone"
-          className="rounded border px-2 py-1"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
-        <input
-          placeholder="Notes"
-          className="rounded border px-2 py-1"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
-        <button type="submit" className="rounded border px-3 py-1">
-          Add
+
+      {showAdd ? (
+        <form onSubmit={addContact} className="space-y-3 rounded-lg border border-dashed border-gray-200 bg-gray-50/60 p-3">
+          <p className="text-xs font-medium text-gray-700">New contact</p>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              placeholder="Name"
+              className="input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+            <input
+              placeholder="Title"
+              className="input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <input
+              placeholder="Email"
+              className="input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <input
+              placeholder="Phone"
+              className="input"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+          <input
+            placeholder="Notes"
+            className="input"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <button type="submit" className="btn-primary btn-sm">
+              {Icons.plus} Add contact
+            </button>
+            <button type="button" onClick={() => setShowAdd(false)} className="btn-ghost btn-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setShowAdd(true)} className="btn-secondary btn-sm">
+          {Icons.plus} Add contact
         </button>
-      </form>
+      )}
     </div>
   );
 }

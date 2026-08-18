@@ -6,6 +6,15 @@ import { ProspectCard } from "@/components/ProspectCard";
 import { ProspectDraftQueue } from "@/components/ProspectDraftQueue";
 import type { ProspectCandidate } from "@/lib/prospecting";
 import type { AccountType } from "@prisma/client";
+import {
+  Card,
+  EmptyState,
+  ErrorNote,
+  Icons,
+  PageHeader,
+  Spinner,
+  typeLabel,
+} from "@/components/ui";
 
 const TYPES: AccountType[] = [
   "CONTRACTOR",
@@ -53,49 +62,65 @@ export default function ProspectingPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-4">
-      <h1 className="text-xl font-semibold">Prospecting</h1>
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader
+        title="Prospecting"
+        subtitle="Find new local businesses to reach out to, and review drafts the automated prospector has queued up."
+      />
+
       <ProspectDraftQueue />
-      <div className="flex items-center gap-2">
-        <select
-          className="rounded border px-3 py-2"
-          value={accountType}
-          onChange={(e) => setAccountType(e.target.value as AccountType)}
-        >
-          {TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <button
-          onClick={search}
-          disabled={loading}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
-        >
-          {loading ? "Searching..." : "Search"}
-        </button>
-      </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <Card
+        title="Find new prospects"
+        description="Searches for local businesses in the selected category that aren't already in your accounts."
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <select
+            className="select sm:w-60"
+            value={accountType}
+            onChange={(e) => setAccountType(e.target.value as AccountType)}
+            aria-label="Business category"
+          >
+            {TYPES.map((t) => (
+              <option key={t} value={t}>
+                {typeLabel(t)}
+              </option>
+            ))}
+          </select>
+          <button onClick={search} disabled={loading} className="btn-primary">
+            {loading ? <Spinner /> : Icons.sparkles}
+            {loading ? "Searching…" : "Search"}
+          </button>
+        </div>
 
-      {results && results.length === 0 && (
-        <p className="text-gray-600">
-          No new prospects found — try again later or try a different
-          category.
-        </p>
-      )}
+        {error && <div className="mt-4"><ErrorNote>{error}</ErrorNote></div>}
+
+        {results && results.length === 0 && (
+          <div className="mt-2">
+            <EmptyState
+              icon={Icons.search}
+              title="No new prospects found"
+              description="Try again later or try a different category."
+            />
+          </div>
+        )}
+      </Card>
 
       {results && results.length > 0 && (
-        <ul className="space-y-2">
-          {results.map((candidate, i) => (
-            <ProspectCard
-              key={i}
-              candidate={candidate}
-              accountType={accountType}
-            />
-          ))}
-        </ul>
+        <div>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+            {results.length} {results.length === 1 ? "result" : "results"}
+          </p>
+          <ul className="space-y-3">
+            {results.map((candidate, i) => (
+              <ProspectCard
+                key={i}
+                candidate={candidate}
+                accountType={accountType}
+              />
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

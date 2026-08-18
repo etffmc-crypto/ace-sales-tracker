@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AccountType } from "@prisma/client";
 import type { ProspectCandidate } from "@/lib/prospecting";
+import { EmailDraftPreview } from "@/components/EmailDraftPreview";
+import { Badge, Icons, Spinner, initials } from "@/components/ui";
 
 export function ProspectCard({
   candidate,
@@ -116,80 +118,104 @@ export function ProspectCard({
     setCopied(true);
   }
 
+  const cityState = [candidate.city, candidate.state].filter(Boolean).join(", ");
+  const address = candidate.addressLine
+    ? [candidate.addressLine, [cityState, candidate.zip].filter(Boolean).join(" ")]
+        .filter(Boolean)
+        .join(", ")
+    : null;
+
   return (
-    <li className="space-y-2 rounded border p-3">
-      <p className="font-semibold">{candidate.name}</p>
-      {candidate.addressLine && (
-        <p className="text-sm text-gray-600">
-          {candidate.addressLine}
-          {candidate.city ? `, ${candidate.city}` : ""}
-          {candidate.state ? `, ${candidate.state}` : ""}
-          {candidate.zip ? ` ${candidate.zip}` : ""}
-        </p>
-      )}
-      {candidate.phone && (
-        <p className="text-sm text-gray-600">{candidate.phone}</p>
-      )}
-      {candidate.email && (
-        <p className="text-sm text-gray-600">{candidate.email}</p>
-      )}
-      {candidate.website && (
-        <p className="text-sm text-gray-600">
-          <a
-            href={candidate.website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600"
-          >
-            {candidate.website}
-          </a>
-        </p>
-      )}
-      {candidate.notes && (
-        <p className="text-sm text-gray-600">{candidate.notes}</p>
-      )}
-
-      {addError && <p className="text-sm text-red-600">{addError}</p>}
-
-      {!accountId ? (
-        <button
-          onClick={addProspect}
-          disabled={adding}
-          className="rounded border px-3 py-1 text-sm disabled:opacity-50"
-        >
-          {adding ? "Adding..." : "Add as prospect"}
-        </button>
-      ) : !draft ? (
-        <button
-          onClick={draftEmail}
-          disabled={drafting}
-          className="rounded border px-3 py-1 text-sm disabled:opacity-50"
-        >
-          {drafting ? "Drafting..." : "Draft intro email"}
-        </button>
-      ) : (
-        <div className="space-y-2 rounded border p-2">
-          <p className="text-sm font-semibold">Subject: {draft.subject}</p>
-          <p className="whitespace-pre-wrap text-sm">{draft.body}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={copyEmail}
-              className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
-            >
-              {copied ? "Copied!" : "Copy"}
-            </button>
+    <li className="card card-pad space-y-3">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600">
+          {initials(candidate.name)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium text-gray-900">{candidate.name}</p>
+            {accountId && <Badge tone="success">{Icons.check} Added</Badge>}
+          </div>
+          {address && <p className="text-sm text-gray-500">{address}</p>}
+          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+            {candidate.phone && (
+              <span className="inline-flex items-center gap-1.5">
+                {Icons.phone} {candidate.phone}
+              </span>
+            )}
             {candidate.email && (
+              <span className="inline-flex items-center gap-1.5">
+                {Icons.mail} {candidate.email}
+              </span>
+            )}
+            {candidate.website && (
               <a
-                href={`mailto:${candidate.email}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}
-                className="rounded border px-3 py-1 text-sm"
+                href={candidate.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="link truncate"
               >
-                Open in email
+                {candidate.website.replace(/^https?:\/\//, "")}
               </a>
             )}
           </div>
+          {candidate.notes && (
+            <p className="mt-2 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-600">
+              {candidate.notes}
+            </p>
+          )}
         </div>
+      </div>
+
+      {addError && <p className="alert-error">{addError}</p>}
+
+      {!accountId ? (
+        <div>
+          <button
+            onClick={addProspect}
+            disabled={adding}
+            className="btn-secondary"
+          >
+            {adding ? <Spinner /> : Icons.plus}
+            {adding ? "Adding…" : "Add as prospect"}
+          </button>
+        </div>
+      ) : !draft ? (
+        <div>
+          <button
+            onClick={draftEmail}
+            disabled={drafting}
+            className="btn-secondary"
+          >
+            {drafting ? <Spinner /> : Icons.sparkles}
+            {drafting ? "Drafting…" : "Draft intro email"}
+          </button>
+        </div>
+      ) : (
+        <EmailDraftPreview
+          subject={draft.subject}
+          body={draft.body}
+          to={candidate.email}
+          actions={
+            <>
+              <button onClick={copyEmail} className="btn-primary btn-sm">
+                {copied ? Icons.check : Icons.copy}
+                {copied ? "Copied!" : "Copy"}
+              </button>
+              {candidate.email && (
+                <a
+                  href={`mailto:${candidate.email}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}
+                  className="btn-secondary btn-sm"
+                >
+                  {Icons.mail}
+                  Open in email
+                </a>
+              )}
+            </>
+          }
+        />
       )}
-      {draftError && <p className="text-sm text-red-600">{draftError}</p>}
+      {draftError && <p className="alert-error">{draftError}</p>}
     </li>
   );
 }

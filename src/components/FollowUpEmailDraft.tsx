@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AccountDetail } from "@/types/account";
+import { EmailDraftPreview } from "@/components/EmailDraftPreview";
+import { Icons, Spinner } from "@/components/ui";
 
 export function FollowUpEmailDraft({
   accountId,
@@ -26,8 +28,8 @@ export function FollowUpEmailDraft({
 
   if (contactsWithEmail.length === 0) {
     return (
-      <p className="text-sm text-gray-600">
-        Add an email to a contact to draft follow-up emails.
+      <p className="muted">
+        Add an email address to a contact to draft follow-up emails.
       </p>
     );
   }
@@ -83,71 +85,76 @@ export function FollowUpEmailDraft({
   );
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {!draft && !showPicker && (
         <button
           onClick={handleDraftClick}
           disabled={loading}
-          className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+          className="btn-secondary"
         >
-          {loading ? "Drafting..." : "Draft follow-up email"}
+          {loading ? <Spinner /> : Icons.sparkles}
+          {loading ? "Drafting…" : "Draft follow-up email"}
         </button>
       )}
 
       {showPicker && !draft && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
-            className="rounded border px-2 py-1 text-sm"
+            className="select sm:flex-1"
             value={selectedContactId}
             onChange={(e) => setSelectedContactId(e.target.value)}
           >
-            <option value="">Choose a contact...</option>
+            <option value="">Choose a contact…</option>
             {contactsWithEmail.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name} ({c.email})
               </option>
             ))}
           </select>
-          <button
-            onClick={() => selectedContactId && requestDraft(selectedContactId)}
-            disabled={!selectedContactId || loading}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
-          >
-            {loading ? "Drafting..." : "Draft"}
-          </button>
-          <button
-            onClick={() => setShowPicker(false)}
-            className="text-sm text-gray-600"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
-      {draft && draftContact && (
-        <div className="space-y-2 rounded border p-3">
-          <p className="text-sm font-semibold">Subject: {draft.subject}</p>
-          <p className="whitespace-pre-wrap text-sm">{draft.body}</p>
           <div className="flex gap-2">
-            <a
-              href={`mailto:${draftContact.email}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}
-              className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
-            >
-              Send via email
-            </a>
             <button
-              onClick={() => {
-                setDraft(null);
-                setSelectedContactId("");
-              }}
-              className="text-sm text-gray-600"
+              onClick={() => selectedContactId && requestDraft(selectedContactId)}
+              disabled={!selectedContactId || loading}
+              className="btn-primary"
             >
-              Close
+              {loading ? <Spinner /> : Icons.sparkles}
+              {loading ? "Drafting…" : "Draft"}
+            </button>
+            <button onClick={() => setShowPicker(false)} className="btn-ghost">
+              Cancel
             </button>
           </div>
         </div>
+      )}
+
+      {error && <p className="alert-error">{error}</p>}
+
+      {draft && draftContact && (
+        <EmailDraftPreview
+          subject={draft.subject}
+          body={draft.body}
+          to={`${draftContact.name} <${draftContact.email}>`}
+          actions={
+            <>
+              <a
+                href={`mailto:${draftContact.email}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}
+                className="btn-primary btn-sm"
+              >
+                {Icons.mail}
+                Send via email
+              </a>
+              <button
+                onClick={() => {
+                  setDraft(null);
+                  setSelectedContactId("");
+                }}
+                className="btn-ghost btn-sm ml-auto"
+              >
+                Close
+              </button>
+            </>
+          }
+        />
       )}
     </div>
   );
