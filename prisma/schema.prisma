@@ -53,8 +53,9 @@ model Account {
   source        AccountSource @default(PROSPECTED)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  contacts      Contact[]
-  interactions  Interaction[]
+  contacts       Contact[]
+  interactions   Interaction[]
+  prospectDrafts ProspectDraft[]
 
   @@index([pipelineStage])
   @@index([accountType])
@@ -86,4 +87,17 @@ model Interaction {
 
   @@index([accountId])
   @@index([date])
+}
+
+model ProspectDraft {
+  id             String   @id @default(uuid())
+  accountId      String
+  account        Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  subject        String
+  body           String
+  recipientEmail String?
+  reviewed       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([reviewed])
 }
