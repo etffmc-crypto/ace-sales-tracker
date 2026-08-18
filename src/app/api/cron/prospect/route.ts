@@ -12,8 +12,12 @@ import { parseEmailDraftResponse } from "@/lib/followUpEmail";
 export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.error("cron/prospect: CRON_SECRET not configured");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -80,6 +84,13 @@ export async function GET(request: NextRequest) {
   let addedCount = 0;
   let draftedCount = 0;
 
+  type CreatedCandidate = {
+    candidate: (typeof candidates)[number];
+    accountId: string;
+  };
+  const created: CreatedCandidate[] = [];
+
+  // Phase 1: create Account + Contact sequentially, per-candidate isolated.
   for (const candidate of candidates) {
     let accountId: string;
     try {
@@ -97,17 +108,6 @@ export async function GET(request: NextRequest) {
       });
       accountId = account.id;
       addedCount++;
-
-      if (candidate.email) {
-        await prisma.contact.create({
-          data: {
-            accountId,
-            name: candidate.name,
-            email: candidate.email,
-            phone: candidate.phone,
-          },
-        });
-      }
     } catch (err) {
       console.error(
         "cron/prospect: failed to add candidate",
@@ -117,7 +117,34 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
-    try {
+    if (candidate.email) {
+      try {
+        await prisma.contact.create({
+          data: {
+            accountId,
+            name: candidate.name,
+            email: candidate.email,
+            phone: candidate.phone,
+          },
+        });
+      } catch (err) {
+        console.error(
+          "cron/prospect: failed to create contact for",
+          candidate.name,
+          err,
+        );
+      }
+    }
+
+    created.push({ candidate, accountId });
+  }
+
+  // Phase 2: draft intro emails concurrently so ~8 sequential AI calls
+  // collapse into roughly one call's wall-clock time, keeping us well
+  // within maxDuration. Each draft is isolated in its own try/catch so
+  // one candidate's failure can't affect any other candidate's draft.
+  const draftResults = await Promise.allSettled(
+    created.map(async ({ candidate, accountId }) => {
       const emailPrompt = buildProspectingEmailPrompt(
         candidate.name,
         accountType,
@@ -142,15 +169,20 @@ export async function GET(request: NextRequest) {
           recipientEmail: candidate.email,
         },
       });
+    }),
+  );
+
+  draftResults.forEach((result, i) => {
+    if (result.status === "fulfilled") {
       draftedCount++;
-    } catch (err) {
+    } else {
       console.error(
         "cron/prospect: failed to draft email for",
-        candidate.name,
-        err,
+        created[i].candidate.name,
+        result.reason,
       );
     }
-  }
+  });
 
   return NextResponse.json({
     accountType,
