@@ -111,3 +111,16 @@ Subject: <subject line>
 
   return `${intro}\n\n${content}\n\n${format}`;
 }
+
+export function categoryForDate(date: Date): AccountType {
+  const ROTATION: AccountType[] = [
+    "OTHER", // Sunday
+    "CONTRACTOR", // Monday
+    "RESTAURANT", // Tuesday
+    "PROPERTY_MGMT", // Wednesday
+    "MUNICIPAL", // Thursday
+    "OTHER", // Friday
+    "OTHER", // Saturday
+  ];
+  return ROTATION[date.getUTCDay()];
+}

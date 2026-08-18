@@ -3,6 +3,7 @@ import {
   buildProspectSearchPrompt,
   parseProspectSearchResponse,
   buildProspectingEmailPrompt,
+  categoryForDate,
 } from "./prospecting";
 
 describe("buildProspectSearchPrompt", () => {
@@ -75,5 +76,43 @@ describe("buildProspectingEmailPrompt", () => {
   it("instructs a generic greeting when there is no contact name", () => {
     const prompt = buildProspectingEmailPrompt("Test Co", "OTHER");
     expect(prompt).toContain("generically");
+  });
+});
+
+describe("categoryForDate", () => {
+  it("returns CONTRACTOR for Monday", () => {
+    expect(categoryForDate(new Date(Date.UTC(2026, 7, 17)))).toBe(
+      "CONTRACTOR",
+    );
+  });
+
+  it("returns RESTAURANT for Tuesday", () => {
+    expect(categoryForDate(new Date(Date.UTC(2026, 7, 18)))).toBe(
+      "RESTAURANT",
+    );
+  });
+
+  it("returns PROPERTY_MGMT for Wednesday", () => {
+    expect(categoryForDate(new Date(Date.UTC(2026, 7, 19)))).toBe(
+      "PROPERTY_MGMT",
+    );
+  });
+
+  it("returns MUNICIPAL for Thursday", () => {
+    expect(categoryForDate(new Date(Date.UTC(2026, 7, 20)))).toBe(
+      "MUNICIPAL",
+    );
+  });
+
+  it("returns OTHER for Friday", () => {
+    expect(categoryForDate(new Date(Date.UTC(2026, 7, 21)))).toBe("OTHER");
+  });
+
+  it("returns OTHER for Saturday", () => {
+    expect(categoryForDate(new Date(Date.UTC(2026, 7, 22)))).toBe("OTHER");
+  });
+
+  it("returns OTHER for Sunday", () => {
+    expect(categoryForDate(new Date(Date.UTC(2026, 7, 23)))).toBe("OTHER");
   });
 });
